@@ -1,7 +1,14 @@
+import java.io.IOException;
+
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println(DynamicProgramming.ackermann(4, 1));
+        try {
+            HuffmanCoding.encode("test.pdf", "encoded.txt");
+            HuffmanCoding.decode("encoded.txt", "decoded_test.pdf");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static double timeMilli(Runnable function) {
