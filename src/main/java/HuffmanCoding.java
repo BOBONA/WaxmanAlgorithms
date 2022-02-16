@@ -23,7 +23,7 @@ public class HuffmanCoding {
                 File output = new File(args[2]);
                 if (args[0].toUpperCase().startsWith("E")) {
                     encode(input, output);
-                    System.out.printf("Reduced file size by %d%%\n", 1 - output.length() / input.length());
+                    System.out.printf("Reduced file size by %f%%\n", 100 * (1 - (double) output.length() / input.length()));
                 } else {
                     decode(input, output);
                 }
