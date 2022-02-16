@@ -15,10 +15,25 @@ import java.util.PriorityQueue;
 public class HuffmanCoding {
 
     public static void main(String[] args) {
-
+        if (args.length != 3) {
+            System.out.println("Expected 3 arguments: mode <e or d>, input <filepath>, output <filepath>");
+        } else {
+            try {
+                File input = new File(args[1]);
+                File output = new File(args[2]);
+                if (args[0].toUpperCase().startsWith("E")) {
+                    encode(input, output);
+                    System.out.printf("Reduced file size by %d%%\n", 1 - output.length() / input.length());
+                } else {
+                    decode(input, output);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    public static void encode(String inputFile, String outputFile) throws IOException {
+    public static void encode(File inputFile, File outputFile) throws IOException {
         // read file
         InputStream input = new FileInputStream(inputFile);
         // find frequencies
@@ -90,7 +105,7 @@ public class HuffmanCoding {
         file.close();
     }
 
-    public static void decode(String inputFile, String outputFile) throws IOException {
+    public static void decode(File inputFile, File outputFile) throws IOException {
         // read data
         InputStream input = new FileInputStream(inputFile);
         BitReader bits = new BitReader(input);
