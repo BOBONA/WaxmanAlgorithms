@@ -19,6 +19,7 @@ public class HuffmanCoding {
             System.out.println("Expected 3 arguments: mode <e or d>, input <filepath>, output <filepath>");
         } else {
             try {
+                // encode or decode depending on program arguments
                 File input = new File(args[1]);
                 File output = new File(args[2]);
                 if (args[0].toUpperCase().startsWith("E")) {
@@ -41,12 +42,13 @@ public class HuffmanCoding {
         int next;
         while ((next = input.read()) != -1) {
             if (frequencies[next] == null) {
+                // create a new frequency node
                 HuffmanTreeNode node = new HuffmanTreeNode(0, false, next);
                 frequencies[next] = node;
             }
             frequencies[next].frequency++;
         }
-        // create tree
+        // create huffman tree using a priority queue
         PriorityQueue<HuffmanTreeNode> queue = new PriorityQueue<>(Comparator.comparingInt(n -> n.frequency));
         for (HuffmanTreeNode node : frequencies) {
             if (node != null) {
@@ -57,6 +59,7 @@ public class HuffmanCoding {
             queue.add(new HuffmanTreeNode(0, true, -1));
         }
         while (queue.size() > 1) {
+            // join smallest two nodes into one internal node
             HuffmanTreeNode min = queue.remove();
             HuffmanTreeNode min2 = queue.remove();
             HuffmanTreeNode internal = new HuffmanTreeNode(
@@ -67,15 +70,16 @@ public class HuffmanCoding {
             queue.add(internal);
         }
         HuffmanTreeNode tree = queue.remove();
+        // calculate the huffman codes
         String[] codes = new String[256];
         findCodes(tree, codes, "");
-        // encode data and write file
+        // wrap output stream in my BitWriter class
         OutputStream output = new FileOutputStream(outputFile);
         BitWriter bits = new BitWriter(output);
-        // file info
+        // first two bytes start off blank because their info hasn't been calculated yet
         bits.writeByte(0);
         bits.writeByte(0);
-        // codes
+        // write each character and its corresponding huffman code to the file
         int codeCount = 0;
         for (int i = 0; i < codes.length; i++) {
             String code = codes[i];
@@ -87,7 +91,7 @@ public class HuffmanCoding {
             }
             codeCount++;
         }
-        // data
+        // write the encoded data
         input.close();
         input = new FileInputStream(inputFile);
         while ((next = input.read()) != -1) {
@@ -96,7 +100,7 @@ public class HuffmanCoding {
             }
         }
         int usedBits = bits.close();
-        // set the first two info bytes
+        // set the first two bytes
         RandomAccessFile file = new RandomAccessFile(outputFile, "rw");
         file.seek(0);
         file.writeByte(usedBits);
@@ -106,9 +110,10 @@ public class HuffmanCoding {
     }
 
     public static void decode(File inputFile, File outputFile) throws IOException {
-        // read data
+        // wrap an input stream in my BitReader class
         InputStream input = new FileInputStream(inputFile);
         BitReader bits = new BitReader(input);
+        // first two bytes
         int usedBits = bits.nextByte();
         int codeCount = bits.nextByte() + 1;
         // recreate tree
@@ -118,6 +123,7 @@ public class HuffmanCoding {
             int character = bits.nextByte();
             int codeSize = bits.nextByte();
             cursor = tree;
+            // follow each code, creating internal nodes as needed
             for (int j = 0; j < codeSize; j++) {
                 int bit = bits.nextBit();
                 if (bit == 0) {
@@ -156,6 +162,7 @@ public class HuffmanCoding {
         output.close();
     }
 
+    // recursive function to find each code in a tree
     public static void findCodes(HuffmanTreeNode node, String[] codes, String path) {
         if (node == null) return;
         if (!node.isInternal) {
@@ -166,6 +173,7 @@ public class HuffmanCoding {
         }
     }
 
+    // simple class to store node info
     public static class HuffmanTreeNode {
 
         int frequency;
@@ -192,16 +200,19 @@ public class HuffmanCoding {
         }
 
         public void writeByte(int b) throws IOException {
+            // writes bit by bit
             for (int i = 7; i >= 0; i--) {
                 writeBit((b >> i) & 1);
             }
         }
 
         public void writeBit(int b) throws IOException {
+            // if the byte has been filled then write it to the output stream
             if (filledBits == 8) {
                 output.write(next);
                 filledBits = 0;
             }
+            // shift the byte and set the lowest bit
             next <<= 1;
             if (b == 1) {
                 next |= 1;
@@ -212,6 +223,7 @@ public class HuffmanCoding {
         }
 
         public int close() throws IOException {
+            // write the remaining bits
             next <<= 8 - filledBits;
             output.write(next);
             output.close();
@@ -219,6 +231,7 @@ public class HuffmanCoding {
         }
     }
 
+    // this class holds an extra byte as a buffer so that the end of file can be detected easily
     public static class BitReader {
 
         InputStream input;
@@ -233,6 +246,7 @@ public class HuffmanCoding {
         }
 
         public int nextByte() throws IOException {
+            // reads bit by bit
             int b = 0;
             for (int i = 0; i < 8; i++) {
                 b <<= 1;
@@ -246,6 +260,7 @@ public class HuffmanCoding {
         }
 
         public int nextBit() throws IOException {
+            // if all the bits of the buffer byte have been read then read a new byte
             if (readBits == 8) {
                 next = following;
                 following = input.read();
