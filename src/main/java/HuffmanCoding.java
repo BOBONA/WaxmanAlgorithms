@@ -1,5 +1,7 @@
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -213,12 +215,7 @@ public class HuffmanCoding {
                 filledBits = 0;
             }
             // shift the byte and set the lowest bit
-            next <<= 1;
-            if (b == 1) {
-                next |= 1;
-            } else {
-                next &= ~1;
-            }
+            next = next * 2 + b;
             filledBits++;
         }
 
@@ -266,6 +263,7 @@ public class HuffmanCoding {
                 following = input.read();
                 readBits = 0;
             }
+            // read a bit and shift the byte
             int bit = (next >> 7) & 1;
             next <<= 1;
             readBits++;
