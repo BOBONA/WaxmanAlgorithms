@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 /**
+ * Uses Huffman coding to compress files.
  * Encoded file description
  * 1 byte: the number of bits used in the last byte
  * 1 byte: the number of codes (minus 1 since the range is [1, 256])
@@ -16,6 +17,10 @@ import java.util.PriorityQueue;
  */
 public class HuffmanCoding {
 
+    /**
+     * The main method encodes/decodes files according to arguments
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         if (args.length != 3) {
             System.out.println("Expected 3 arguments: mode <e or d>, input <filepath>, output <filepath>");
@@ -36,6 +41,12 @@ public class HuffmanCoding {
         }
     }
 
+    /**
+     * Compresses a file using Huffman coding
+     * @param inputFile handle to the input file
+     * @param outputFile handle to the output file
+     * @throws IOException if an error occurs during io operations
+     */
     public static void encode(File inputFile, File outputFile) throws IOException {
         // read file
         InputStream input = new FileInputStream(inputFile);
@@ -111,6 +122,12 @@ public class HuffmanCoding {
         file.close();
     }
 
+    /**
+     * Decompresses a file that had been compressed with the encode method
+     * @param inputFile handle to the compressed input file
+     * @param outputFile handle to the output file
+     * @throws IOException if an error occurs during io operations
+     */
     public static void decode(File inputFile, File outputFile) throws IOException {
         // wrap an input stream in my BitReader class
         InputStream input = new FileInputStream(inputFile);
@@ -164,7 +181,13 @@ public class HuffmanCoding {
         output.close();
     }
 
-    // recursive function to find each code in a tree
+
+    /**
+     * Recursive function that finds each code in a tree
+     * @param node the current node
+     * @param codes an array of Huffman codes for each possible byte
+     * @param path the Huffman code that would arrive at the current node
+     */
     public static void findCodes(HuffmanTreeNode node, String[] codes, String path) {
         if (node == null) return;
         if (!node.isInternal) {
@@ -175,7 +198,7 @@ public class HuffmanCoding {
         }
     }
 
-    // simple class to store node info
+    /** A simple class to store node info */
     public static class HuffmanTreeNode {
 
         int frequency;
@@ -184,6 +207,11 @@ public class HuffmanCoding {
         HuffmanTreeNode left;
         HuffmanTreeNode right;
 
+        /**
+         * @param frequency the number of times the code occurs
+         * @param isInternal whether the node is an internal node or a leaf
+         * @param character the byte character that the node represents, not important if the node is internal
+         */
         public HuffmanTreeNode(int frequency, boolean isInternal, int character) {
             this.frequency = frequency;
             this.isInternal = isInternal;
@@ -191,16 +219,27 @@ public class HuffmanCoding {
         }
     }
 
+    /** A simple class that allows writing to a file bit by bit.
+     * It uses a buffer to hold 8 bits at a time. This class is intended to fully wrap an OutputStream. */
     public static class BitWriter {
 
         OutputStream output;
         int next;
         int filledBits;
 
+        /**
+         * Constructor
+         * @param output an output stream for the BitWriter to write to
+         */
         public BitWriter(OutputStream output) {
             this.output = output;
         }
 
+        /**
+         * Writes an entire byte to the stream
+         * @param b byte to be written
+         * @throws IOException if an error occurs during io operations
+         */
         public void writeByte(int b) throws IOException {
             // writes bit by bit
             for (int i = 7; i >= 0; i--) {
@@ -208,6 +247,11 @@ public class HuffmanCoding {
             }
         }
 
+        /**
+         * Writes a bit to the stream
+         * @param b a bit, 0 or 1
+         * @throws IOException if an error occurs during io operations
+         */
         public void writeBit(int b) throws IOException {
             // if the byte has been filled then write it to the output stream
             if (filledBits == 8) {
@@ -219,6 +263,11 @@ public class HuffmanCoding {
             filledBits++;
         }
 
+        /**
+         * Writes the remaining bits and closes the output stream
+         * @return the number of bits that were remaining
+         * @throws IOException if an error occurs during io operations
+         */
         public int close() throws IOException {
             // write the remaining bits
             next <<= 8 - filledBits;
@@ -228,7 +277,11 @@ public class HuffmanCoding {
         }
     }
 
-    // this class holds an extra byte as a buffer so that the end of file can be detected easily
+    /** A simple class that allows reading from a file bit by bit.
+     * It uses a buffer to read a byte from a file and then extract the bits individually.
+     * Because of the way InputStreams handle end of files, this class also stores the next
+     * following byte in order to know ahead of time if the end of the stream has been reached.
+     * This class is intended to fully wrap an InputStream. */
     public static class BitReader {
 
         InputStream input;
@@ -236,12 +289,22 @@ public class HuffmanCoding {
         int readBits;
         int following; // to keep track of whether the end of the input is reached
 
+        /**
+         * Constructor
+         * @param input an input stream for the BitReader to read from
+         * @throws IOException if an error occurs during io operations
+         */
         public BitReader(InputStream input) throws IOException {
             this.input = input;
             following = input.read();
             readBits = 8;
         }
 
+        /**
+         * Reads an entire byte from the stream
+         * @return read byte as an int
+         * @throws IOException if an error occurs during io operations
+         */
         public int nextByte() throws IOException {
             // reads bit by bit
             int b = 0;
@@ -256,6 +319,11 @@ public class HuffmanCoding {
             return b;
         }
 
+        /**
+         * Reads a single bit from the stream
+         * @return a bit, 0 or 1
+         * @throws IOException if an error occurs during io operations
+         */
         public int nextBit() throws IOException {
             // if all the bits of the buffer byte have been read then read a new byte
             if (readBits == 8) {
@@ -270,10 +338,17 @@ public class HuffmanCoding {
             return bit;
         }
 
+        /**
+         * @return whether the BitReader is reading from the last byte of the stream.
+         */
         public boolean isLastByte() {
             return following == -1;
         }
 
+        /**
+         * closes the BitReader
+         * @throws IOException if an error occurs while closing the InputStream
+         */
         public void close() throws IOException {
             input.close();
         }
