@@ -5,6 +5,52 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TravelingSalesman {
 
     /**
+     * solves the traveling salesman problem
+     * @param graph a complete graph
+     * @return an optimal hamiltonian path
+     */
+    public static int[] solve(double[][] graph) {
+        int[] array = new int[graph.length];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = i;
+        }
+        int[] bestPath = array.clone();
+        checkPermutations(array, array.length, array.length, graph, bestPath);
+        return bestPath;
+    }
+
+    /**
+     * This is something I found online called Heap's Algorithm for iterating through permutations.
+     * @param arr the array
+     * @param size a variable used by the algorithm
+     * @param n size of the array
+     * @param graph a complete graph
+     * @param bestPath the current shortest hamiltonian cycle of the graph
+     */
+    public static void checkPermutations(int[] arr, int size, int n, double[][] graph, int[] bestPath) {
+        if (size == 1) {
+            // copy permutation over if it's better
+            if (length(graph, arr) < length(graph, bestPath)) {
+                for (int i = 0; i < arr.length; i++) {
+                    bestPath[i] = arr[i];
+                }
+            }
+        }
+        for (int i = 0; i < size; i++) {
+            checkPermutations(arr, size - 1, n, graph, bestPath);
+            int temp;
+            if (size % 2 == 1) {
+                temp = arr[0];
+                arr[0] = arr[size - 1];
+            } else {
+                temp = arr[i];
+                arr[i] = arr[size - 1];
+            }
+            arr[size - 1] = temp;
+        }
+    }
+
+    /**
      * Approximates the traveling salesman problem, never more than twice the cost of the optimal solution
      * @param graph an adjacency matrix of a complete graph where values correspond to the distance between two vertices
      * @return a list of the indexes of the vertices of an optimal hamiltonian cycle
@@ -15,6 +61,21 @@ public class TravelingSalesman {
         int[] walk = new int[graph.length];
         preorderTreeWalk(minTree, root, walk, 0);
         return walk;
+    }
+
+    /**
+     * Finds the length of a hamiltonian cycle
+     * @param graph an adjacency matrix of a complete graph
+     * @param path a list of the indexes of a hamiltonian cycle
+     * @return the total weight of the path
+     */
+    public static double length(double[][] graph, int[] path) {
+        double total = 0;
+        for (int i = 0; i < path.length - 1; i++) {
+            total += graph[path[i]][path[i + 1]];
+        }
+        total += graph[path[path.length - 1]][path[0]];
+        return total;
     }
 
     /**
